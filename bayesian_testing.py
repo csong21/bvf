@@ -66,35 +66,20 @@ class BayesianTesting(object):
     ) -> list:
         buckets, res_lists = zip(*posteriors)
         prob_stats = []
-        if num_groups == 2:
-            bucket_a = buckets[0]
-            bucket_b = buckets[1]
-            a = res_lists[0]
-            b = res_lists[1]
-            diff = a - b
-            prob_a = np.sum(diff>0)/len(diff)
-            prob_b = 1 - prob_a
-            prob_stats.append((bucket_a, prob_a))
-            prob_stats.append((bucket_b, prob_b))
-
-        if num_groups == 3:
-            bucket_a = buckets[0]
-            bucket_b = buckets[1]
-            bucket_c = buckets[2]
-            a = res_lists[0]
-            b = res_lists[1]
-            c = res_lists[2]
-            diff_ab = a - b
-            diff_ac = a - c
-            diff_bc = b - c
-            samples = len(diff_ab)
-
-            prob_a = np.sum((diff_ac > 0) & (diff_ab > 0))/samples
-            prob_b = np.sum((diff_bc > 0) & (diff_ab < 0))/samples
-            prob_c = np.sum((diff_ac < 0) & (diff_bc < 0))/samples
-            prob_stats.append((bucket_a, prob_a))
-            prob_stats.append((bucket_b, prob_b))
-            prob_stats.append((bucket_c, prob_c))
+        for i in range(num_groups):
+            j = 0
+            prob_i = 1
+            while(j < num_groups):
+                if j == i:
+                    j += 1
+                    continue
+                else:
+                    diff = res_lists[i] - res_lists[j]
+                    prob_ij = np.sum(diff > 0)/len(diff)
+                    if prob_ij < prob_i:
+                        prob_i = prob_ij
+                    j +=1
+            prob_stats.append((buckets[i], prob_i))
         return prob_stats
 
 
