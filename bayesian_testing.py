@@ -35,7 +35,7 @@ class BayesianTesting(object):
 		for bucket in unique_buckets:
 			bucket_df = df.loc[df["bucket"] == bucket]
 			posteri = bp._generate_posterior_distribution(bucket_df)
-			posteriors.append(posteri)
+			posteriors.append((bucket, posteri))
 
 		return posteriors
 
@@ -51,19 +51,63 @@ class BayesianTesting(object):
 		return 
 	
 	@staticmethod
+	def _calculate_chance_to_beat_all(
+		posteriors: list, num_groups: int
+	) -> list:
+		buckets, res_lists = zip(*posteriors)
+		prob_stats = []
+		if num_groups == 2:
+			bucket_a = buckets[0]
+        	bucket_b = buckets[1]
+			a = res_lists[0]
+			b = res_lists[1]
+			diff = a - b
+			prob_a = np.sum(diff>0)/len(diff)
+			prob_b = 1 - prob_a
+			prob_stats.append((bucket_a, prob_a))
+			prob_stats.append((bucket_b, prob_b))
+
+		if num_groups == 3:
+			bucket_a = buckets[0]
+        	bucket_b = buckets[1]
+        	bucket_c = buckets[2]
+			a = res_lists[0]
+			b = res_lists[1]
+			c = res_lists[2]
+			diff_ab = a - b
+			diff_ac = a - c
+			diff_bc = b - c
+			samples = len(diff_ab)
+
+			prob_a = np.sum((diff_ac > 0) & (diff_ab > 0))/samples
+			prob_b = np.sum((diff_bc > 0) & (diff_ab < 0))/samples
+			prob_c = np.sum((diff_ac < 0) & (diff_bc < 0))/samples
+			prob_stats.append((bucket_a, prob_a))
+			prob_stats.append((bucket_b, prob_b))
+			prob_stats.append((bucket_c, prob_c))
+		return prob_stats
+
+
+	@staticmethod
 	def _calculate_expected_loss(
-        res_lists: list, num_groups: int
+        posteriors: list, num_groups: int
     ) -> list:
+    	buckets, res_lists = zip(*posteriors)
         loss_stats = []
         if num_groups == 2:
+        	bucket_a = buckets[0]
+        	bucket_b = buckets[1]
             a = res_lists[0]
             b = res_lists[1]
             loss_a = np.mean(np.maximum(b - a, 0))
             loss_b = np.mean(np.maximum(a - b, 0))
-            loss_stats.append(loss_a)
-            loss_stats.append(loss_b)
+            loss_stats.append((bucket_a, loss_a))
+            loss_stats.append((bucket_b, loss_b))
 
         if num_groups == 3:
+        	bucket_a = buckets[0]
+        	bucket_b = buckets[1]
+        	bucket_c = buckets[2]
         	a = res_lists[0]
             b = res_lists[1]
             c = res_lists[2]
@@ -73,11 +117,15 @@ class BayesianTesting(object):
             loss_b = np.mean(np.maximum(loss_b, c - b))
             loss_c = np.mean(np.maximum(a - c, 0))
             loss_b = np.mean(np.maximum(loss_c, b - c))
-            loss_stats.append(loss_a)
-            loss_stats.append(loss_b)
-            loss_stats.append(loss_c)
+            loss_stats.append((bucket_a, loss_a))
+            loss_stats.append((bucket_b, loss_b))
+            loss_stats.append((bucket_c, loss_c))
 
         if num_groups == 4:
+        	bucket_a = buckets[0]
+        	bucket_b = buckets[1]
+        	bucket_c = buckets[2]
+        	bucket_d = buckets[3]
         	a = res_lists[0]
             b = res_lists[1]
             c = res_lists[2]
@@ -98,10 +146,10 @@ class BayesianTesting(object):
             loss_d = np.mean(np.maximum(a - d, 0))
             loss_d = np.mean(np.maximum(loss_d, b - d))
             loss_d = np.mean(np.maximum(loss_d, c - d))
-            
-            loss_stats.append(loss_a)
-            loss_stats.append(loss_b)
-            loss_stats.append(loss_c)
-            loss_stats.append(loss_d)
+
+            loss_stats.append((bucket_a, loss_a))
+            loss_stats.append((bucket_b, loss_b))
+            loss_stats.append((bucket_c, loss_c))
+            loss_stats.append((bucket_d, loss_d))
 
         return loss_stats
