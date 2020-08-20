@@ -54,7 +54,7 @@ def RunModel(df: pd.DataFrame, ts: Timestamp, model: pystan.model.StanModel, mod
             'r': r
         }
 
-    fit= model.sampling(data=dat, iter=1000, chains=4)
+    fit= model.sampling(data=dat, iter=1000, chains=1)
     
     res =  fit.extract(permuted=True)
     return res

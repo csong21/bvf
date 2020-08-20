@@ -60,7 +60,7 @@ class BayesianRevenue(BayesianAnalysis):
             'r': r
         }
 
-        fit= self.stan_model.sampling(data=dat, iter=1000, chains=1)
+        fit= self.stan_model.sampling(data=dat, iter=1000, chains=1) # To add a variable to control multiprocessing
 
         res = fit.extract(permuted=True)
         # Samples from the posterior distribution of avg. revenue
@@ -100,7 +100,7 @@ class BayesianConversion(BayesianAnalysis):
             'prior_beta': self.prior_beta
         }
 
-        fit= self.stan_model.sampling(data=dat, iter=1000, chains=1)
+        fit= self.stan_model.sampling(data=dat, iter=1000, chains=1) # To add a variable to control multiprocessingßß
 
         res = fit.extract(permuted=True)
         # Samples from the posterior distribution of conversion rate
